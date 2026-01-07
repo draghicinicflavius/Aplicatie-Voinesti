@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html lang="ro" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Lista Melodii Voinesti</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 600px; 
+            margin: 30px auto; 
+            padding: 25px; 
+            background-color: #f8f9fa;
+            color: #333; 
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 { 
+            color: #007bff; 
+            border-bottom: 3px solid #007bff; 
+            padding-bottom: 10px; 
+            margin-top: 0; 
+            text-align: center;
+        }
+        h2 { color: #343a40; margin-top: 25px; }
+        
+        .song-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            border-left: 5px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s;
+        }
+        .song-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .song-item a {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #343a40;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        .song-item a:hover {
+            color: #007bff;
+            text-decoration: underline;
+        }
+        .song-item span {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 Repertoriu Voinesti 🎤</h1>
+    <h2>Lista Melodii:</h2>
+
+    <div th:each="song : ${songs}" class="song-item">
+        <a th:href="@{/song/{id}(id=${song.id})}" th:text="${song.title}">Titlu Melodie Placeholder</a>
+        
+        (Autor: <span th:text="${song.author}">Autor Placeholder</span>) 
+    </div>
+
+</body>
+</html>
