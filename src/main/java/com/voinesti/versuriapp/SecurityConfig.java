@@ -21,8 +21,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests((requests) -> requests
                 // 1. Resurse libere
-                .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
-                
+                .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/manifest.json", "/service-worker.js").permitAll()                
                 // 2. Doar ADMIN (Flavius) poate adăuga/șterge/edita
                 .requestMatchers("/adauga", "/salveaza", "/edit/**", "/delete/**").hasRole("ADMIN")
                 
