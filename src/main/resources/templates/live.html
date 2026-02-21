@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live - Cor Voinesti</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; font-size: 28px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .lyrics {
+            white-space: pre-wrap;
+            font-size: 22px; /* Am mărit puțin textul pentru a fi mai ușor de citit */
+            line-height: 1.6;
+            color: #34495e;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        .no-song { color: #e74c3c; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div th:if="${song != null}">
+        <h1 th:text="${song.title}">Titlu Cantec</h1>
+        
+        <div class="lyrics" th:text="${song.versuri}">Versurile vor aparea aici...</div>
+    </div>
+    
+    <div th:if="${song == null}" class="no-song">
+        <p>Momentan nu a fost selectată nicio piesă.</p>
+        <p>Așteptați instrucțiunile dirijorului...</p>
+    </div>
+
+    <div class="footer">
+        Aplicație creată de <strong>Flavius Draghici</strong>
+    </div>
+</div>
+
+<script>
+    // Refresh automat la fiecare 5 secunde (am scăzut de la 10 pentru a fi mai rapid)
+    setTimeout(function(){
+       location.reload();
+    }, 5000);
+</script>
+
+</body>
+</html>

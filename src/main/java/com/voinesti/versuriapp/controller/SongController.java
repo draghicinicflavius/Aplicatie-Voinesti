@@ -1,6 +1,8 @@
 package com.voinesti.versuriapp.controller;
 
+import com.voinesti.versuriapp.repository.AppStateRepository;
 import com.voinesti.versuriapp.repository.SongRepository;
+import com.voinesti.versuriapp.model.AppState;
 import com.voinesti.versuriapp.model.Song;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,11 +15,41 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 
+
+
 @Controller
 public class SongController {
 
     @Autowired
     private SongRepository songRepository;
+    @Autowired
+    private AppStateRepository appStateRepository;
+    @PostMapping("/select-song/{id}")
+public String selectSong(@PathVariable Long id) {
+    AppState state = appStateRepository.findById(1L).orElse(new AppState());
+    state.setCurrentSongId(id);
+    appStateRepository.save(state);
+    return "redirect:/"; // Ne întoarcem la listă după ce am ales
+}
+@GetMapping("/live")
+public String liveView(Model model) {
+    try {
+        AppState state = appStateRepository.findById(1L).orElse(null);
+        if (state != null && state.getCurrentSongId() != null) {
+            Song currentSong = songRepository.findById(state.getCurrentSongId()).orElse(null);
+            model.addAttribute("song", currentSong);
+        } else {
+            model.addAttribute("song", null);
+        }
+    } catch (Exception e) {
+        // Dacă e vreo eroare de bază de date, măcar să nu vedem Error 500
+        System.out.println("Eroare la citirea stării: " + e.getMessage());
+        model.addAttribute("song", null);
+    }
+    return "live";
+}
+
+
 
     // 1. Afișează lista de melodii cu numărători și sortare
     @GetMapping("/") 
@@ -79,4 +111,5 @@ public class SongController {
         songRepository.deleteById(id);
         return "redirect:/";
     }
+    
 }

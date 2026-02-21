@@ -20,22 +20,35 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests((requests) -> requests
-                // 1. Permitem accesul la resursele vizuale și pagina de login
+                // 1. Resurse libere
                 .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                 
-                // 2. Protejăm rutele de administrare (trebuie să fie IDENTICE cu cele din Controller)
+                // 2. Doar ADMIN (Flavius) poate adăuga/șterge/edita
                 .requestMatchers("/adauga", "/salveaza", "/edit/**", "/delete/**").hasRole("ADMIN")
                 
-                // 3. Toate celelalte pagini (lista, detaliile) cer logare (USER sau ADMIN)
+                // 3. Admin și Dirijor pot selecta piesa pentru cor
+                .requestMatchers("/select-song/**").hasAnyRole("ADMIN", "DIRIJOR")
+                
+                // 4. Toți cei logați pot vedea pagina de live și lista
                 .anyRequest().authenticated()
             )
             .formLogin((form) -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true)
+                // LOGICA DE REDIRECȚIONARE AUTOMATĂ
+                .successHandler((request, response, authentication) -> {
+                    var authorities = authentication.getAuthorities();
+                    // Dacă e simplu UTILIZATOR, trimite-l direct la /live
+                    if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+                        response.sendRedirect("/live");
+                    } else {
+                        // Adminul și Dirijorul merg la lista de piese
+                        response.sendRedirect("/");
+                    }
+                })
                 .permitAll()
             )
             .logout((logout) -> logout
-                .logoutUrl("/logout") // URL-ul pe care îl apelează butonul nostru
+                .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
@@ -47,21 +60,28 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // ADMIN: Tu (Flavius) - ai acces la editare/ștergere
-        UserDetails admin = User.builder()
+        // 1. ADMIN (Flavius) - Control total
+        UserDetails flavius = User.builder()
             .username("flavius")
-            .password(passwordEncoder().encode("1234")) 
+            .password(passwordEncoder().encode("1234"))
             .roles("ADMIN")
             .build();
 
-        // USER: Membrii corului - pot doar să vadă versurile
-        UserDetails user = User.builder()
-            .username("membru")
+        // 2. DIRIJOR - Doar alege piesele
+        UserDetails dirijor = User.builder()
+            .username("dirijor")
+            .password(passwordEncoder().encode("1234"))
+            .roles("DIRIJOR")
+            .build();
+
+        // 3. UTILIZATOR - Vede doar pagina live
+        UserDetails utilizator = User.builder()
+            .username("utilizator")
             .password(passwordEncoder().encode("1234"))
             .roles("USER")
             .build();
 
-        return new InMemoryUserDetailsManager(admin, user);
+        return new InMemoryUserDetailsManager(flavius, dirijor, utilizator);
     }
 
     @Bean
