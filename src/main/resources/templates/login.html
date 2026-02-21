@@ -13,6 +13,10 @@
         button:hover { background-color: #1976D2; }
         .error { color: red; margin-bottom: 10px; font-size: 14px; }
     </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#004d40">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
     <div class="login-container">
@@ -28,5 +32,10 @@
             <button type="submit">Intră în cont</button>
         </form>
     </div>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js');
+  }
+</script>
 </body>
 </html>

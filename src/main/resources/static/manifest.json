@@ -1,0 +1,20 @@
+{
+  "name": "Cor Voinești Versuri",
+  "short_name": "Versuri Cor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#004d40",
+  "theme_color": "#004d40",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/4344/4344843.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/192/4344/4344843.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
