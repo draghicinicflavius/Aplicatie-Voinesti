@@ -38,18 +38,10 @@
         }
         .btn-logout:hover { background: rgba(255,255,255,0.2); color: white; }
 
-        /* Stil buton special Dirijor */
-        .btn-select-live { 
-            background-color: #3498db; 
-            color: white; 
-            font-weight: bold; 
-            border: none; 
-            width: 100%; 
-            padding: 10px; 
-            border-radius: 0; 
-            transition: background 0.3s;
-        }
-        .btn-select-live:hover { background-color: #2980b9; }
+        /* Stil Bara Cautare */
+        .search-container { max-width: 600px; margin: 0 auto 30px auto; }
+        .search-input { width: 100%; padding: 12px 20px; font-size: 16px; border-radius: 25px; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none;}
+        .search-input:focus { border-color: #004d40; box-shadow: 0 2px 8px rgba(0, 77, 64, 0.2); }
     </style>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#004d40">
@@ -78,7 +70,7 @@
 </div>
 
 <div class="container">
-    <div class="text-center mb-5">
+    <div class="text-center mb-4">
         <a href="/" class="btn btn-outline-dark btn-filter">
             Toate <span class="badge bg-dark badge-count" th:text="${countToate}">0</span>
         </a>
@@ -93,28 +85,40 @@
         </a>
     </div>
 
-    <div class="row">
+    <div class="search-container" style="position: relative;">
+        <input type="text" id="searchInput" class="search-input" onkeyup="cautaPiesa()" placeholder="🔍 Caută o piesă după titlu..." style="padding-right: 40px;">
+        <button id="micBtn" onclick="startDictation()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); border: none; background: transparent; font-size: 22px; cursor: pointer;" title="Caută vocal">
+            🎙️
+        </button>
+    </div>
+
+    <div class="row" id="listaPiese">
         <div class="col-12 text-center" th:if="${#lists.isEmpty(songs)}">
             <p class="text-muted">Momentan nu sunt piese în această categorie.</p>
         </div>
 
-        <div class="col-md-4 mb-4" th:each="song : ${songs}">
+        <div class="col-md-4 mb-4 song-container" th:each="song : ${songs}">
             <div class="card h-100 song-card">
                 
                 <div sec:authorize="hasRole('DIRIJOR')">
-                    <form th:action="@{/select-song/{id}(id=${song.id})}" method="post">
-                        <button type="submit" class="btn-select-live">
-                            📢 Trimite la Cor (LIVE)
-                        </button>
-                    </form>
+                    <form th:id="'live-form-' + ${song.id}" th:action="@{/select-song/{id}(id=${song.id})}" method="post" style="display: none;"></form>
+                    
+                    <a href="javascript:void(0);" class="song-link" th:onclick="'trimiteSiDeschide(' + ${song.id} + ');'">
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
+                            <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
+                        </div>
+                    </a>
                 </div>
 
-                <a th:href="@{/song/{id}(id=${song.id})}" class="song-link">
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
-                        <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
-                    </div>
-                </a>
+                <div sec:authorize="!hasRole('DIRIJOR')">
+                    <a th:href="@{/song/{id}(id=${song.id})}" class="song-link">
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
+                            <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
+                        </div>
+                    </a>
+                </div>
 
                 <div sec:authorize="hasRole('ADMIN')" class="card-footer bg-transparent border-top-0 pb-3 text-center">
                     <a th:href="@{/edit/{id}(id=${song.id})}" class="btn btn-sm btn-outline-primary me-2">✏️ Editează</a>
@@ -130,6 +134,75 @@
         <p class="text-muted" style="font-size: 0.9rem;">by Flavius Draghici</p>
     </div>
 </div>
+
+<script>
+// Functie care sterge diacriticele dintr-un text
+function eliminaDiacritice(text) {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Functia pentru bara de cautare text
+function cautaPiesa() {
+    let input = eliminaDiacritice(document.getElementById('searchInput').value);
+    let piese = document.getElementsByClassName('song-container');
+
+    for (let i = 0; i < piese.length; i++) {
+        let titlu = eliminaDiacritice(piese[i].querySelector('.card-title').innerText);
+        
+        if (titlu.includes(input)) {
+            piese[i].style.display = "";
+        } else {
+            piese[i].style.display = "none";
+        }
+    }
+}
+
+// Functia pentru cautare vocala (Microfon)
+function startDictation() {
+    let micBtn = document.getElementById('micBtn');
+
+    if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
+        let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = new SpeechRecognition();
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "ro-RO"; // Seteaza limba romana
+
+        micBtn.innerText = "🔴"; // Schimba iconita in timpul ascultarii
+
+        recognition.start();
+
+        recognition.onresult = function(e) {
+            let textRecunoscut = e.results[0][0].transcript;
+            document.getElementById('searchInput').value = textRecunoscut;
+            micBtn.innerText = "🎙️";
+            cautaPiesa(); // Filtreaza lista automat dupa ce a inteles cuvantul
+        };
+
+        recognition.onerror = function(e) {
+            micBtn.innerText = "🎙️";
+        };
+    } else {
+        alert("Ne pare rău, browserul tău nu suportă căutarea vocală. Încearcă din Google Chrome.");
+    }
+}
+
+// Functia secreta pentru Dirijor
+function trimiteSiDeschide(songId) {
+    let form = document.getElementById('live-form-' + songId);
+    let formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        window.location.href = '/song/' + songId;
+    }).catch(error => {
+        window.location.href = '/song/' + songId; 
+    });
+}
+</script>
 
 </body>
 </html>
