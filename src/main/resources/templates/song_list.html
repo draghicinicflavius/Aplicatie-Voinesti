@@ -136,19 +136,16 @@
 </div>
 
 <script>
-// Functie care sterge diacriticele dintr-un text
 function eliminaDiacritice(text) {
-    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim().toLowerCase();
 }
 
-// Functia pentru bara de cautare text
 function cautaPiesa() {
     let input = eliminaDiacritice(document.getElementById('searchInput').value);
     let piese = document.getElementsByClassName('song-container');
 
     for (let i = 0; i < piese.length; i++) {
         let titlu = eliminaDiacritice(piese[i].querySelector('.card-title').innerText);
-        
         if (titlu.includes(input)) {
             piese[i].style.display = "";
         } else {
@@ -157,7 +154,6 @@ function cautaPiesa() {
     }
 }
 
-// Functia pentru cautare vocala (Microfon)
 function startDictation() {
     let micBtn = document.getElementById('micBtn');
 
@@ -167,40 +163,43 @@ function startDictation() {
 
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = "ro-RO"; // Seteaza limba romana
+        recognition.lang = "ro-RO"; 
 
-        micBtn.innerText = "🔴"; // Schimba iconita in timpul ascultarii
+        micBtn.innerText = "🔴"; 
 
         recognition.start();
 
         recognition.onresult = function(e) {
             let textRecunoscut = e.results[0][0].transcript;
+            textRecunoscut = textRecunoscut.replace(/[.,]/g, "").trim();
+            
+            // Aici pune automat cuvintele in bara de cautare
             document.getElementById('searchInput').value = textRecunoscut;
             micBtn.innerText = "🎙️";
-            cautaPiesa(); // Filtreaza lista automat dupa ce a inteles cuvantul
+            cautaPiesa(); 
         };
 
+        // AICI E MODIFICAREA: Daca da eroare, ne va spune exact de ce!
         recognition.onerror = function(e) {
             micBtn.innerText = "🎙️";
+            alert("Eroare microfon: " + e.error); 
         };
+
+        recognition.onend = function() {
+            micBtn.innerText = "🎙️";
+        };
+
     } else {
-        alert("Ne pare rău, browserul tău nu suportă căutarea vocală. Încearcă din Google Chrome.");
+        alert("Browserul nu suportă căutarea vocală.");
     }
 }
 
-// Functia secreta pentru Dirijor
 function trimiteSiDeschide(songId) {
     let form = document.getElementById('live-form-' + songId);
     let formData = new FormData(form);
-    
-    fetch(form.action, {
-        method: 'POST',
-        body: formData
-    }).then(() => {
-        window.location.href = '/song/' + songId;
-    }).catch(error => {
-        window.location.href = '/song/' + songId; 
-    });
+    fetch(form.action, { method: 'POST', body: formData })
+    .then(() => { window.location.href = '/song/' + songId; })
+    .catch(() => { window.location.href = '/song/' + songId; });
 }
 </script>
 
