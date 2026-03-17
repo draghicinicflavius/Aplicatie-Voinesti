@@ -42,6 +42,29 @@
         .search-container { max-width: 600px; margin: 0 auto 30px auto; }
         .search-input { width: 100%; padding: 12px 20px; font-size: 16px; border-radius: 25px; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none;}
         .search-input:focus { border-color: #004d40; box-shadow: 0 2px 8px rgba(0, 77, 64, 0.2); }
+
+        /* Stil pentru Butonul de Microfon si Animatie */
+        .btn-mic {
+            position: absolute; 
+            right: 15px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            border: none; 
+            background: transparent; 
+            font-size: 22px; 
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        @keyframes pulse-mic {
+            0% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.4); }
+            100% { transform: translateY(-50%) scale(1); }
+        }
+
+        .mic-listening {
+            animation: pulse-mic 0.8s infinite !important;
+        }
     </style>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#004d40">
@@ -87,7 +110,7 @@
 
     <div class="search-container" style="position: relative;">
         <input type="text" id="searchInput" class="search-input" onkeyup="cautaPiesa()" placeholder="🔍 Caută o piesă după titlu..." style="padding-right: 40px;">
-        <button id="micBtn" onclick="startDictation()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); border: none; background: transparent; font-size: 22px; cursor: pointer;" title="Caută vocal">
+        <button id="micBtn" class="btn-mic" onclick="startDictation()" title="Caută vocal">
             🎙️
         </button>
     </div>
@@ -154,6 +177,9 @@ function cautaPiesa() {
     }
 }
 
+// Variabila pentru a tine minte cand e liniste
+let silenceTimer;
+
 function startDictation() {
     let micBtn = document.getElementById('micBtn');
 
@@ -161,32 +187,62 @@ function startDictation() {
         let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = new SpeechRecognition();
 
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true; // Il lasam sa asculte in continuu pana il oprim noi
+        recognition.interimResults = true; // Permite scrierea cuvintelor pe masura ce le spui
         recognition.lang = "ro-RO"; 
 
+        // Adaugam clasa de animatie (pulseaza) si facem butonul rosu
+        micBtn.classList.add("mic-listening");
         micBtn.innerText = "🔴"; 
 
         recognition.start();
 
+        // Oprim microfonul dupa 3 secunde daca nu aude absolut nimic de la inceput
+        silenceTimer = setTimeout(function() {
+            recognition.stop();
+        }, 3000);
+
         recognition.onresult = function(e) {
-            let textRecunoscut = e.results[0][0].transcript;
-            textRecunoscut = textRecunoscut.replace(/[.,]/g, "").trim();
+            // A auzit ceva! Anulam oprirea automata
+            clearTimeout(silenceTimer);
+
+            let textInterimar = "";
+            let textFinal = "";
+
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+                if (e.results[i].isFinal) {
+                    textFinal += e.results[i][0].transcript;
+                } else {
+                    textInterimar += e.results[i][0].transcript;
+                }
+            }
             
-            // Aici pune automat cuvintele in bara de cautare
-            document.getElementById('searchInput').value = textRecunoscut;
-            micBtn.innerText = "🎙️";
-            cautaPiesa(); 
+            // Folosim textul final daca exista, altfel cel pe care e pe cale sa-l ghiceasca
+            let textDeAfisat = textFinal || textInterimar;
+            textDeAfisat = textDeAfisat.replace(/[.,]/g, "").trim();
+            
+            document.getElementById('searchInput').value = textDeAfisat;
+            cautaPiesa(); // Filtram in timp real!
+
+            // Pornim un cronometru de 2 secunde. Daca dupa acest cuvant e liniste 2 secunde, oprim ascultarea.
+            silenceTimer = setTimeout(function() {
+                recognition.stop();
+            }, 2000);
         };
 
-        // AICI E MODIFICAREA: Daca da eroare, ne va spune exact de ce!
-        recognition.onerror = function(e) {
+        // Functie de curatare a butonului cand termina
+        function oprireMicrofon() {
+            clearTimeout(silenceTimer);
+            micBtn.classList.remove("mic-listening");
             micBtn.innerText = "🎙️";
-            alert("Eroare microfon: " + e.error); 
+        }
+
+        recognition.onerror = function(e) {
+            oprireMicrofon();
         };
 
         recognition.onend = function() {
-            micBtn.innerText = "🎙️";
+            oprireMicrofon();
         };
 
     } else {
