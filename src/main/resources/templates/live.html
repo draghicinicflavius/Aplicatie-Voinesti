@@ -20,30 +20,71 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        h1 { color: #2c3e50; font-size: 28px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h1 { 
+            color: #2c3e50; 
+            font-size: 28px; 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 10px; 
+            margin-top: 5px;
+        }
+
+        /* Controalele pentru Zoom */
+        .zoom-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .zoom-btn {
+            background-color: #e0f2f1;
+            color: #004d40;
+            border: 1px solid #b2dfdb;
+            padding: 5px 15px;
+            margin-left: 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .zoom-btn:hover { background-color: #b2dfdb; }
+
         .lyrics {
             white-space: pre-wrap;
-            font-size: 22px; /* Am mărit puțin textul pentru a fi mai ușor de citit */
+            /* AM MODIFICAT AICI: Aliniere la stânga pentru o citire mult mai ușoară */
+            text-align: left; 
             line-height: 1.6;
             color: #34495e;
-            margin-top: 20px;
+            margin-top: 10px;
             font-weight: 500;
+            background-color: #fcfcfc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
+        
         .footer {
             margin-top: 40px;
             font-size: 12px;
             color: #95a5a6;
         }
-        .no-song { color: #e74c3c; font-style: italic; }
+        .no-song { color: #e74c3c; font-style: italic; margin-top: 30px; font-size: 18px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div th:if="${song != null}">
+        
+        <div class="zoom-controls">
+            <span style="font-size: 0.9rem; color: #666; margin-right: 5px;">Ajustare Text:</span>
+            <button class="zoom-btn" onclick="schimbaFont(-2)" title="Micșorează textul">A -</button>
+            <button class="zoom-btn" onclick="schimbaFont(2)" title="Mărește textul">A +</button>
+        </div>
+
         <h1 th:text="${song.title}">Titlu Cantec</h1>
         
-        <div class="lyrics" th:text="${song.versuri}">Versurile vor aparea aici...</div>
+        <div class="lyrics" id="versuri-live" th:text="${song.versuri}">Versurile vor aparea aici...</div>
     </div>
     
     <div th:if="${song == null}" class="no-song">
@@ -57,7 +98,35 @@
 </div>
 
 <script>
-    // Refresh automat la fiecare 5 secunde (am scăzut de la 10 pentru a fi mai rapid)
+    // --- PARTEA DE ZOOM (Cu memorie pentru refresh) ---
+    // Cautam in memoria telefonului daca utilizatorul a setat deja o marime. Daca nu, incepem de la 22px.
+    let currentSize = parseInt(localStorage.getItem('marimeFontCor')) || 22;
+    let versuriDiv = document.getElementById('versuri-live');
+
+    // Aplicam marimea imediat cand se incarca pagina
+    if (versuriDiv) {
+        versuriDiv.style.fontSize = currentSize + 'px';
+    }
+
+    // Functia activata de butoanele A- si A+
+    function schimbaFont(schimbare) {
+        currentSize += schimbare;
+        
+        // Nu il lasam sa faca textul prea mic sau prea imens
+        if(currentSize < 14) currentSize = 14;
+        if(currentSize > 45) currentSize = 45;
+        
+        // Aplicam marimea
+        if (versuriDiv) {
+            versuriDiv.style.fontSize = currentSize + 'px';
+        }
+        
+        // SALVAM in memorie ca sa reziste la refresh-ul de 5 secunde!
+        localStorage.setItem('marimeFontCor', currentSize);
+    }
+
+    // --- PARTEA DE REFRESH AUTOMAT (Live-ul) ---
+    // Refresh automat la fiecare 5 secunde
     setTimeout(function(){
        location.reload();
     }, 5000);
