@@ -24,12 +24,39 @@ public class SongController {
     @Autowired
     private AppStateRepository appStateRepository;
 
+    // 1. Pagina de Start Principală (rădăcina /) -> Duce pe TOȚI la ecranul de alegere (login.html)
+    @GetMapping("/")
+    public String showWelcomePage() {
+        return "login";
+    }
+
+    // 2. Interfața de Dirijor (lista de melodii) -> Mutată dedicat pe /dirijor
+    @GetMapping("/dirijor") 
+    public String showSongList(@RequestParam(required = false) String cat, Model model) {
+        List<Song> songs;
+        
+        if (cat != null && !cat.isEmpty()) {
+            songs = songRepository.findByCategoryOrderByTitleAsc(cat);
+        } else {
+            songs = songRepository.findAllByOrderByTitleAsc();
+        }
+        
+        // Trimitem numărul de piese pentru fiecare buton
+        model.addAttribute("countToate", songRepository.count());
+        model.addAttribute("countPopulara", songRepository.findByCategory("Populara").size());
+        model.addAttribute("countColinde", songRepository.findByCategory("Colinde").size());
+        model.addAttribute("countPatriotice", songRepository.findByCategory("Patriotice").size());
+        
+        model.addAttribute("songs", songs);
+        return "song_list"; 
+    }
+
     @PostMapping("/select-song/{id}")
     public String selectSong(@PathVariable Long id) {
         AppState state = appStateRepository.findById(1L).orElse(new AppState());
         state.setCurrentSongId(id);
         appStateRepository.save(state);
-        return "redirect:/"; // Ne întoarcem la listă după ce am ales
+        return "redirect:/dirijor"; // Ne întoarcem la lista de dirijor după ce am ales
     }
 
     @GetMapping("/live")
@@ -49,28 +76,7 @@ public class SongController {
         return "live";
     }
 
-    // 1. Afișează lista de melodii cu numărători și sortare
-    @GetMapping("/") 
-    public String showSongList(@RequestParam(required = false) String cat, Model model) {
-        List<Song> songs;
-        
-        if (cat != null && !cat.isEmpty()) {
-            songs = songRepository.findByCategoryOrderByTitleAsc(cat);
-        } else {
-            songs = songRepository.findAllByOrderByTitleAsc();
-        }
-        
-        // Trimitem numărul de piese pentru fiecare buton (Varianta ta originala)
-        model.addAttribute("countToate", songRepository.count());
-        model.addAttribute("countPopulara", songRepository.findByCategory("Populara").size());
-        model.addAttribute("countColinde", songRepository.findByCategory("Colinde").size());
-        model.addAttribute("countPatriotice", songRepository.findByCategory("Patriotice").size());
-        
-        model.addAttribute("songs", songs);
-        return "song_list"; 
-    }
-    
-    // 2. Afișează detaliile unei singure melodii
+    // Afișează detaliile unei singure melodii
     @GetMapping("/song/{id}") 
     public String showSongDetails(@PathVariable Long id, Model model) {
         Song song = songRepository.findById(id)
@@ -80,22 +86,22 @@ public class SongController {
         return "song_detail"; 
     }
 
-    // 3. Afișează formularul pentru adăugare piesă nouă
+    // Afișează formularul pentru adăugare piesă nouă
     @GetMapping("/adauga")
     public String showAddForm(Model model) {
         model.addAttribute("song", new Song());
         return "adauga_piesa";
     }
 
-    // 4. Salvează piesa în baza de date
+    // Salvează piesa în baza de date
     @PostMapping("/salveaza")
     public String saveSong(@ModelAttribute("song") Song song) {
         song.setDateAdded(java.time.LocalDate.now());
         songRepository.save(song);
-        return "redirect:/";
+        return "redirect:/dirijor";
     }
 
-    // 5. Afișează formularul de editare
+    // Afișează formularul de editare
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         Song song = songRepository.findById(id)
@@ -104,14 +110,14 @@ public class SongController {
         return "adauga_piesa"; 
     }
 
-    // 6. Șterge o piesă
+    // Șterge o piesă
     @GetMapping("/delete/{id}")
     public String deleteSong(@PathVariable Long id) {
         songRepository.deleteById(id);
-        return "redirect:/";
+        return "redirect:/dirijor";
     }
 
-    // 7. Pagina dedicată de Login pentru Admin (Flavius)
+    // Pagina dedicată de Login pentru Admin (Flavius)
     @GetMapping("/admin-login")
     public String showAdminLogin() {
         return "admin_login";

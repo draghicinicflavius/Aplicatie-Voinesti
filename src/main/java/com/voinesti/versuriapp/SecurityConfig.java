@@ -21,9 +21,10 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((requests) -> requests
-                // 1. Resurse publice
+                // 1. Resurse publice (inclusiv noua ruta /dirijor)
                 .requestMatchers(
                     "/", 
+                    "/dirijor/**",
                     "/live/**", 
                     "/song/**",
                     "/select-song/**", 
@@ -39,18 +40,18 @@ public class SecurityConfig {
                 // 2. Doar ADMIN (Flavius)
                 .requestMatchers("/adauga", "/salveaza", "/edit/**", "/delete/**").hasRole("ADMIN")
 
-                // 3. Orice altă cerere cerută
+                // 3. Orice altă cerere necesită autentificare
                 .anyRequest().authenticated()
             )
             .formLogin((form) -> form
                 .loginPage("/admin-login")
-                .loginProcessingUrl("/admin-login") // Îi spunem exact unde să proceseze formularul
-                .defaultSuccessUrl("/", true) // După login reuşit te duce pe pagina principală de unde poți edita/adăuga
+                .loginProcessingUrl("/admin-login")
+                .defaultSuccessUrl("/dirijor", true) // Te duce direct la interfața de unde poți gestiona piese
                 .permitAll()
             )
             .logout((logout) -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout")
+                .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
