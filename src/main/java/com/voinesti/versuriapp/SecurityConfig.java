@@ -19,31 +19,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((requests) -> requests
-                // 1. Resurse libere
-                .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/manifest.json", "/service-worker.js").permitAll()                
-                // 2. Doar ADMIN (Flavius) poate adăuga/șterge/edita
+                // 1. Resurse publice
+                .requestMatchers(
+                    "/", 
+                    "/live/**", 
+                    "/song/**",
+                    "/select-song/**", 
+                    "/login", 
+                    "/admin-login",
+                    "/css/**", 
+                    "/js/**", 
+                    "/images/**", 
+                    "/manifest.json", 
+                    "/service-worker.js"
+                ).permitAll()                
+
+                // 2. Doar ADMIN (Flavius)
                 .requestMatchers("/adauga", "/salveaza", "/edit/**", "/delete/**").hasRole("ADMIN")
-                
-                // 3. Admin și Dirijor pot selecta piesa pentru cor
-                .requestMatchers("/select-song/**").hasAnyRole("ADMIN", "DIRIJOR")
-                
-                // 4. Toți cei logați pot vedea pagina de live și lista
+
+                // 3. Orice altă cerere cerută
                 .anyRequest().authenticated()
             )
             .formLogin((form) -> form
-                .loginPage("/login")
-                // LOGICA DE REDIRECȚIONARE AUTOMATĂ
-                .successHandler((request, response, authentication) -> {
-                    var authorities = authentication.getAuthorities();
-                    // Dacă e simplu UTILIZATOR, trimite-l direct la /live
-                    if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
-                        response.sendRedirect("/live");
-                    } else {
-                        // Adminul și Dirijorul merg la lista de piese
-                        response.sendRedirect("/");
-                    }
-                })
+                .loginPage("/admin-login")
+                .loginProcessingUrl("/admin-login") // Îi spunem exact unde să proceseze formularul
+                .defaultSuccessUrl("/", true) // După login reuşit te duce pe pagina principală de unde poți edita/adăuga
                 .permitAll()
             )
             .logout((logout) -> logout
@@ -59,28 +61,13 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // 1. ADMIN (Flavius) - Control total
         UserDetails flavius = User.builder()
             .username("flavius")
-            .password(passwordEncoder().encode("1234"))
+            .password(passwordEncoder().encode("214365qpR"))
             .roles("ADMIN")
             .build();
 
-        // 2. DIRIJOR - Doar alege piesele
-        UserDetails dirijor = User.builder()
-            .username("dirijor")
-            .password(passwordEncoder().encode("1234"))
-            .roles("DIRIJOR")
-            .build();
-
-        // 3. UTILIZATOR - Vede doar pagina live
-        UserDetails utilizator = User.builder()
-            .username("utilizator")
-            .password(passwordEncoder().encode("1234"))
-            .roles("USER")
-            .build();
-
-        return new InMemoryUserDetailsManager(flavius, dirijor, utilizator);
+        return new InMemoryUserDetailsManager(flavius);
     }
 
     @Bean

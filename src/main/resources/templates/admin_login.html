@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Flavius</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 280px; text-align: center; }
+        h3 { color: #333; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #111; }
+        .error { color: red; font-size: 13px; margin-bottom: 10px; }
+        a { display: block; margin-top: 15px; color: #666; text-decoration: none; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>🔒 Autentificare Admin</h3>
+        
+        <div th:if="${param.error}" class="error">
+            User sau parolă greșită!
+        </div>
+
+        <!-- AM SCHIMBAT ACTION IN /admin-login -->
+        <form th:action="@{/admin-login}" method="post">
+            <input type="text" name="username" placeholder="Utilizator" required>
+            <input type="password" name="password" placeholder="Parolă" required>
+            <button type="submit">Autentificare</button>
+        </form>
+
+        <a href="/login">← Înapoi la aplicație</a>
+    </div>
+</body>
+</html>

@@ -15,41 +15,39 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 
-
-
 @Controller
 public class SongController {
 
     @Autowired
     private SongRepository songRepository;
+    
     @Autowired
     private AppStateRepository appStateRepository;
+
     @PostMapping("/select-song/{id}")
-public String selectSong(@PathVariable Long id) {
-    AppState state = appStateRepository.findById(1L).orElse(new AppState());
-    state.setCurrentSongId(id);
-    appStateRepository.save(state);
-    return "redirect:/"; // Ne întoarcem la listă după ce am ales
-}
-@GetMapping("/live")
-public String liveView(Model model) {
-    try {
-        AppState state = appStateRepository.findById(1L).orElse(null);
-        if (state != null && state.getCurrentSongId() != null) {
-            Song currentSong = songRepository.findById(state.getCurrentSongId()).orElse(null);
-            model.addAttribute("song", currentSong);
-        } else {
+    public String selectSong(@PathVariable Long id) {
+        AppState state = appStateRepository.findById(1L).orElse(new AppState());
+        state.setCurrentSongId(id);
+        appStateRepository.save(state);
+        return "redirect:/"; // Ne întoarcem la listă după ce am ales
+    }
+
+    @GetMapping("/live")
+    public String liveView(Model model) {
+        try {
+            AppState state = appStateRepository.findById(1L).orElse(null);
+            if (state != null && state.getCurrentSongId() != null) {
+                Song currentSong = songRepository.findById(state.getCurrentSongId()).orElse(null);
+                model.addAttribute("song", currentSong);
+            } else {
+                model.addAttribute("song", null);
+            }
+        } catch (Exception e) {
+            System.out.println("Eroare la citirea stării: " + e.getMessage());
             model.addAttribute("song", null);
         }
-    } catch (Exception e) {
-        // Dacă e vreo eroare de bază de date, măcar să nu vedem Error 500
-        System.out.println("Eroare la citirea stării: " + e.getMessage());
-        model.addAttribute("song", null);
+        return "live";
     }
-    return "live";
-}
-
-
 
     // 1. Afișează lista de melodii cu numărători și sortare
     @GetMapping("/") 
@@ -62,7 +60,7 @@ public String liveView(Model model) {
             songs = songRepository.findAllByOrderByTitleAsc();
         }
         
-        // Trimitem numărul de piese pentru fiecare buton
+        // Trimitem numărul de piese pentru fiecare buton (Varianta ta originala)
         model.addAttribute("countToate", songRepository.count());
         model.addAttribute("countPopulara", songRepository.findByCategory("Populara").size());
         model.addAttribute("countColinde", songRepository.findByCategory("Colinde").size());
@@ -96,20 +94,26 @@ public String liveView(Model model) {
         songRepository.save(song);
         return "redirect:/";
     }
- // Afișează formularul de editare
+
+    // 5. Afișează formularul de editare
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         Song song = songRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("ID invalid: " + id));
         model.addAttribute("song", song);
-        return "adauga_piesa"; // Refolosim același formular
+        return "adauga_piesa"; 
     }
 
-    // Șterge o piesă
+    // 6. Șterge o piesă
     @GetMapping("/delete/{id}")
     public String deleteSong(@PathVariable Long id) {
         songRepository.deleteById(id);
         return "redirect:/";
     }
-    
+
+    // 7. Pagina dedicată de Login pentru Admin (Flavius)
+    @GetMapping("/admin-login")
+    public String showAdminLogin() {
+        return "admin_login";
+    }
 }
