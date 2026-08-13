@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voinesti Versuri</title>
+    <title>Voinesti Versuri - Interfață Dirijor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: hsl(210, 17%, 98%); }
@@ -25,9 +25,8 @@
         .btn-patriotic:hover { background-color: #001f5c; color: white; }
         a.song-link { text-decoration: none; color: inherit; display: block; }
         
-        /* Stil buton Logout */
-        .logout-container { position: absolute; top: 15px; right: 15px; }
-        .btn-logout { 
+        .header-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+        .btn-header { 
             background: transparent; 
             color: rgba(255,255,255,0.8); 
             border: 1px solid rgba(255,255,255,0.5); 
@@ -35,15 +34,14 @@
             border-radius: 20px; 
             padding: 5px 15px;
             transition: all 0.3s;
+            text-decoration: none;
         }
-        .btn-logout:hover { background: rgba(255,255,255,0.2); color: white; }
+        .btn-header:hover { background: rgba(255,255,255,0.2); color: white; }
 
-        /* Stil Bara Cautare */
         .search-container { max-width: 600px; margin: 0 auto 30px auto; }
         .search-input { width: 100%; padding: 12px 20px; font-size: 16px; border-radius: 25px; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none;}
         .search-input:focus { border-color: #004d40; box-shadow: 0 2px 8px rgba(0, 77, 64, 0.2); }
 
-        /* Stil pentru Butonul de Microfon si Animatie */
         .btn-mic {
             position: absolute; 
             right: 15px; 
@@ -74,16 +72,21 @@
 <body>
 
 <div class="hero-section">
-    <div sec:authorize="isAuthenticated()" class="logout-container">
-        <form th:action="@{/logout}" method="post">
-            <button type="submit" class="btn-logout">
-                🚪 Ieșire (<span sec:authentication="name">User</span>)
-            </button>
-        </form>
+    <div class="header-actions">
+        <!-- Buton de schimbat modul inapoi la ecranele principale -->
+        <a href="/" class="btn-header">🏠 Pagina Start</a>
+        
+        <div sec:authorize="isAuthenticated()">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn-header">
+                    🚪 Ieșire (<span sec:authentication="name">User</span>)
+                </button>
+            </form>
+        </div>
     </div>
 
-    <h1>🎤 Versuri Cor Voinești</h1>
-    <p>Alege categoria și găsește piesa dorită</p>
+    <h1>🎼 Interfață Dirijor - Cor Voinești</h1>
+    <p>Apasă pe orice piesă pentru a o transmite direct pe ecranele tuturor!</p>
     
     <div sec:authorize="hasRole('ADMIN')">
         <a href="/adauga" class="btn-admin-add text-decoration-none">
@@ -93,17 +96,18 @@
 </div>
 
 <div class="container">
+    <!-- REPARAT: Link-urile de la filtre duc acum la /dirijor -->
     <div class="text-center mb-4">
-        <a href="/" class="btn btn-outline-dark btn-filter">
+        <a href="/dirijor" class="btn btn-outline-dark btn-filter">
             Toate <span class="badge bg-dark badge-count" th:text="${countToate}">0</span>
         </a>
-        <a href="/?cat=Populara" class="btn btn-primary btn-filter">
+        <a href="/dirijor?cat=Populara" class="btn btn-primary btn-filter">
             🎵 Populară <span class="badge bg-light text-primary badge-count" th:text="${countPopulara}">0</span>
         </a>
-        <a href="/?cat=Colinde" class="btn btn-danger btn-filter">
+        <a href="/dirijor?cat=Colinde" class="btn btn-danger btn-filter">
             🎄 Colinde <span class="badge bg-light text-danger badge-count" th:text="${countColinde}">0</span>
         </a>
-        <a href="/?cat=Patriotice" class="btn btn-patriotic btn-filter">
+        <a href="/dirijor?cat=Patriotice" class="btn btn-patriotic btn-filter">
             🇷🇴 Patriotice <span class="badge bg-light text-dark badge-count" th:text="${countPatriotice}">0</span>
         </a>
     </div>
@@ -123,25 +127,16 @@
         <div class="col-md-4 mb-4 song-container" th:each="song : ${songs}">
             <div class="card h-100 song-card">
                 
-                <div sec:authorize="hasRole('DIRIJOR')">
-                    <form th:id="'live-form-' + ${song.id}" th:action="@{/select-song/{id}(id=${song.id})}" method="post" style="display: none;"></form>
-                    
-                    <a href="javascript:void(0);" class="song-link" th:onclick="'trimiteSiDeschide(' + ${song.id} + ');'">
-                        <div class="card-body text-center">
-                            <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
-                            <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
-                        </div>
-                    </a>
-                </div>
-
-                <div sec:authorize="!hasRole('DIRIJOR')">
-                    <a th:href="@{/song/{id}(id=${song.id})}" class="song-link">
-                        <div class="card-body text-center">
-                            <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
-                            <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
-                        </div>
-                    </a>
-                </div>
+                <!-- REPARAT: Pentru toti utilizatorii din aceasta interfata, click-ul selecteaza piesa si o afiseaza -->
+                <form th:id="'live-form-' + ${song.id}" th:action="@{/select-song/{id}(id=${song.id})}" method="post" style="display: none;"></form>
+                
+                <a href="javascript:void(0);" class="song-link" th:onclick="'trimiteSiDeschide(' + ${song.id} + ');'">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold" th:text="${song.title}">Titlu Piesă</h5>
+                        <p class="text-muted mb-2"><small th:text="${song.category}">Categorie</small></p>
+                        <span class="badge bg-success">Apasă pentru Transmisie Live 📡</span>
+                    </div>
+                </a>
 
                 <div sec:authorize="hasRole('ADMIN')" class="card-footer bg-transparent border-top-0 pb-3 text-center">
                     <a th:href="@{/edit/{id}(id=${song.id})}" class="btn btn-sm btn-outline-primary me-2">✏️ Editează</a>
@@ -177,7 +172,6 @@ function cautaPiesa() {
     }
 }
 
-// Variabila pentru a tine minte cand e liniste
 let silenceTimer;
 
 function startDictation() {
@@ -187,23 +181,20 @@ function startDictation() {
         let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = new SpeechRecognition();
 
-        recognition.continuous = true; // Il lasam sa asculte in continuu pana il oprim noi
-        recognition.interimResults = true; // Permite scrierea cuvintelor pe masura ce le spui
+        recognition.continuous = true; 
+        recognition.interimResults = true; 
         recognition.lang = "ro-RO"; 
 
-        // Adaugam clasa de animatie (pulseaza) si facem butonul rosu
         micBtn.classList.add("mic-listening");
         micBtn.innerText = "🔴"; 
 
         recognition.start();
 
-        // Oprim microfonul dupa 3 secunde daca nu aude absolut nimic de la inceput
         silenceTimer = setTimeout(function() {
             recognition.stop();
         }, 3000);
 
         recognition.onresult = function(e) {
-            // A auzit ceva! Anulam oprirea automata
             clearTimeout(silenceTimer);
 
             let textInterimar = "";
@@ -217,45 +208,44 @@ function startDictation() {
                 }
             }
             
-            // Folosim textul final daca exista, altfel cel pe care e pe cale sa-l ghiceasca
             let textDeAfisat = textFinal || textInterimar;
             textDeAfisat = textDeAfisat.replace(/[.,]/g, "").trim();
             
             document.getElementById('searchInput').value = textDeAfisat;
-            cautaPiesa(); // Filtram in timp real!
+            cautaPiesa();
 
-            // Pornim un cronometru de 2 secunde. Daca dupa acest cuvant e liniste 2 secunde, oprim ascultarea.
             silenceTimer = setTimeout(function() {
                 recognition.stop();
             }, 2000);
         };
 
-        // Functie de curatare a butonului cand termina
         function oprireMicrofon() {
             clearTimeout(silenceTimer);
             micBtn.classList.remove("mic-listening");
             micBtn.innerText = "🎙️";
         }
 
-        recognition.onerror = function(e) {
-            oprireMicrofon();
-        };
-
-        recognition.onend = function() {
-            oprireMicrofon();
-        };
+        recognition.onerror = function(e) { oprireMicrofon(); };
+        recognition.onend = function() { oprireMicrofon(); };
 
     } else {
         alert("Browserul nu suportă căutarea vocală.");
     }
 }
 
+// REPARAT AICI: Trimite selecția către baza de date și deschide vizualizarea piesei
 function trimiteSiDeschide(songId) {
     let form = document.getElementById('live-form-' + songId);
     let formData = new FormData(form);
+    
     fetch(form.action, { method: 'POST', body: formData })
-    .then(() => { window.location.href = '/song/' + songId; })
-    .catch(() => { window.location.href = '/song/' + songId; });
+    .then(() => { 
+        // Dupa ce s-a salvat piesa in DB, mergem pe pagina de detalii a piesei
+        window.location.href = '/song/' + songId; 
+    })
+    .catch(() => { 
+        window.location.href = '/song/' + songId; 
+    });
 }
 </script>
 
