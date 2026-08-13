@@ -74,8 +74,8 @@
             color: #111;
             border: 1px solid #eee;
             margin-top: 10px;
-            text-align: left; /* Aici am fortat textul sa stea la stanga! */
-            transition: font-size 0.2s; /* Animatie lina la zoom */
+            text-align: left;
+            transition: font-size 0.2s;
         }
         
         .category-tag {
@@ -93,7 +93,8 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-link">⬅ Înapoi la Listă</a>
+    <!-- REPARAT: Schimbat href din "/" in "/dirijor" -->
+    <a href="/dirijor" class="back-link">⬅ Înapoi la Listă</a>
 
     <div>
         <span class="category-tag" th:text="${song.category}">Categorie</span>
@@ -114,17 +115,14 @@
     </div>
 
     <script>
-        // Dimensiunea initiala de start (la fel ca in CSS)
         let fontSize = 1.4; 
 
         function schimbaFont(schimbare) {
             fontSize += schimbare;
             
-            // Setam limite ca sa nu poata face textul microscopic sau cat tot ecranul
             if(fontSize < 0.8) fontSize = 0.8;
             if(fontSize > 3.5) fontSize = 3.5;
             
-            // Aplicam noua marime pe containerul de versuri
             document.getElementById('versuri-container').style.fontSize = fontSize + 'rem';
         }
     </script>
